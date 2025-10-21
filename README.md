@@ -16,31 +16,33 @@
 ***====> ACCOUNTS REGISTERED <====***
 
 > 'username'
+
 > 'password'
 
-<ins>USER</ins>        
-suppy           
-12345           
+<ins>USER</ins>     
+suppy
 
-hotaru          
+12345
+
+hotaru     
+
 12345           
 
 kauri
+
 09876
 
 <ins>ADMIN</ins>
 kyle
+
 09876
 
 yoshi
+
 09876
 
-====> DEACTIVATED (blocked) ACCOUNTS <====
 
 
-(please add newly created account..)
-
-[INSTRUCTIONS_FOR_RUNNING]
 
 
 # UPDATES
