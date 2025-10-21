@@ -1,17 +1,17 @@
 [INSTRUCTIONS_FOR_RUNNING]
 
 =====> FOR BACKEND <=====
-//powershell
-1.) cd backend
-2.) .\venv\Scripts\activate
-3.) python manage.py runserver  
+
+use powershell
+* cd backend
+* .\venv\Scripts\activate
+* python manage.py runserver  
 
 =====> FOR FRONTEND <=====
-//cmd
-1.) cd frontend
-2.) npm start
 
-Local: http://localhost:3000
+use cmd
+* cd frontend
+*  npm start
 
 ====> ACCOUNTS REGISTERED <====
 
