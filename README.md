@@ -1,7 +1,7 @@
 Developed by:
-    Kauri Lorraine Flores,
-    Noah Philippe Ibay,
-    Kyle Daniel Tan
+        Kauri Lorraine Flores,
+        Noah Philippe Ibay,
+        Kyle Daniel Tan
 
 # **INSTRUCTIONS_FOR_RUNNING**
 
