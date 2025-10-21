@@ -1,13 +1,13 @@
 # **INSTRUCTIONS_FOR_RUNNING**
 
-## ***> FOR BACKEND <***
+## ***FOR BACKEND***
 
 *use powershell*
 * cd backend
 * .\venv\Scripts\activate
 * python manage.py runserver  
 
-## ***> FOR FRONTEND <***
+## ***FOR FRONTEND***
 
 *use cmd*
 * cd frontend
