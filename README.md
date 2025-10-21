@@ -1,25 +1,24 @@
-[INSTRUCTIONS_FOR_RUNNING]
+**[INSTRUCTIONS_FOR_RUNNING]**
 
-=====> FOR BACKEND <=====
+***=====> FOR BACKEND <=====***
 
-use powershell
+*use powershell*
 * cd backend
 * .\venv\Scripts\activate
 * python manage.py runserver  
 
-=====> FOR FRONTEND <=====
+***=====> FOR FRONTEND <=====***
 
-use cmd
+*use cmd*
 * cd frontend
 *  npm start
 
-====> ACCOUNTS REGISTERED <====
+***====> ACCOUNTS REGISTERED <====***
 
-'username'
+> 'username'
+> 'password'
 
-'password'
-
-[USER]         
+<ins>USER</ins>        
 suppy           
 12345           
 
@@ -29,7 +28,7 @@ hotaru
 kauri
 09876
 
-[ADMIN]
+<ins>ADMIN</ins>
 kyle
 09876
 
