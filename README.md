@@ -16,6 +16,7 @@ use cmd
 ====> ACCOUNTS REGISTERED <====
 
 'username'
+
 'password'
 
 [USER]         
