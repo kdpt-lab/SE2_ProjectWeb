@@ -18,14 +18,21 @@ use cmd
 'username'
 'password'
 
-[USER]         [ADMIN]
-suppy           kyle
-12345           09876
+[USER]         
+suppy           
+12345           
 
-hotaru          yoshi
-12345           09876
+hotaru          
+12345           
 
 kauri
+09876
+
+[ADMIN]
+kyle
+09876
+
+yoshi
 09876
 
 ====> DEACTIVATED (blocked) ACCOUNTS <====
