@@ -9,6 +9,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
+from django.utils import timezone  # ✅ ADD THIS IMPORT
 
 from .serializers import (
     RegisterSerializer, 
@@ -381,11 +382,9 @@ class FeedbackCreateView(APIView):
 
     def post(self, request, format=None):
         """Creates a new feedback entry."""
-        # Use FeedbackSerializer to validate the incoming data
         serializer = FeedbackSerializer(data=request.data, context={'request': request})
         
         if serializer.is_valid():
-            # The serializer handles setting the user ID automatically
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
             
@@ -398,9 +397,7 @@ class FeedbackGalleryView(APIView):
 
     def get(self, request, format=None):
         """Returns a list of all feedback for the gallery."""
-        # Order by submission date (newest first)
         feedbacks = Feedback.objects.all().order_by('-submitted_at')
-        
         serializer = FeedbackSerializer(feedbacks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -414,14 +411,17 @@ class AppointmentCreateView(APIView):
 
     def post(self, request, format=None):
         """Creates a new appointment."""
-        # Use AppointmentSerializer to validate the incoming data
         serializer = AppointmentSerializer(data=request.data, context={'request': request})
         
-        # NOTE: The serializer handles setting user, status, and checking validity
+        # DEBUG: Print data received from frontend
+        print(f"*** APPOINTMENT DATA RECEIVED: {request.data}")
+        
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
             
+        # DEBUG: Print validation errors if data is invalid
+        print(f"*** APPOINTMENT VALIDATION FAILED: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # 2. Handles GET /api/accounts/appointments/booked/ (List booked slots for calendar)
@@ -430,17 +430,95 @@ class AppointmentListView(APIView):
 
     def get(self, request, format=None):
         """Returns a list of confirmed appointments for calendar display."""
-        # Filter for confirmed appointments only
-        appointments = Appointment.objects.filter(status='Confirmed').order_by('appointment_date')
+        # FIX: Query start_time and end_time (from new model)
+        appointments = Appointment.objects.filter(status='Confirmed').select_related('service', 'user').order_by('start_time')
         
-        # Serialize only the essential data needed for the calendar (date, service ID)
-        # We use a list comprehension for a clean, minimal payload
-        data = [
-            {
-                'date': appt.appointment_date,
-                'service_id': appt.service.id,
-            }
-            for appt in appointments
-        ]
+        data = []
+        for appt in appointments:
+            # FIX: Add defensive check for None values
+            if appt.start_time and appt.end_time:
+                data.append({
+                    'id': appt.id, 
+                    'service_id': appt.service.id,
+                    'service_name': appt.service.name,
+                    'start_time': appt.start_time.isoformat(), 
+                    'end_time': appt.end_time.isoformat(),
+                    'user_username': appt.user.username, # ✅ FIX: Added username
+                })
+        
+        return Response(data, status=status.HTTP_200_OK)
+
+# 3. Handles DELETE /api/accounts/appointments/{id}/ (Cancel Appointment)
+class AppointmentDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self, pk):
+        return get_object_or_404(Appointment, pk=pk)
+        
+    def delete(self, request, pk, format=None):
+        """Deletes (cancels) an appointment."""
+        appt = self.get_object(pk)
+        
+        # Security check: Ensure user owns the appointment or is an Admin
+        if appt.user != request.user and not request.user.is_staff:
+            return Response({"detail": "You do not have permission to cancel this appointment."}, 
+                            status=status.HTTP_403_FORBIDDEN)
+
+        appt.delete()
+        return Response({"message": "Appointment cancelled successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+# 4. NEW: Handles GET /api/accounts/appointments/all/ (Get all appointments for admin)
+class AppointmentAdminListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        """Returns all appointments for admin management."""
+        if not request.user.is_staff:
+            return Response({"detail": "Unauthorized. Admins only."}, 
+                            status=status.HTTP_403_FORBIDDEN)
+        
+        appointments = Appointment.objects.all().select_related('service', 'user').order_by('start_time')
+        
+        data = []
+        for appt in appointments:
+            if appt.start_time and appt.end_time:
+                data.append({
+                    'id': appt.id, 
+                    'service_id': appt.service.id,
+                    'service_name': appt.service.name,
+                    'start_time': appt.start_time.isoformat(), 
+                    'end_time': appt.end_time.isoformat(),
+                    'user_username': appt.user.username,
+                    'user_id': appt.user.id,
+                    'status': appt.status,
+                    'booked_at': appt.booked_at.isoformat() if appt.booked_at else None,
+                })
+        
+        return Response(data, status=status.HTTP_200_OK)
+
+# 5. NEW: Handles GET /api/accounts/appointments/my-upcoming/ (Get current user's upcoming appointments)
+class MyUpcomingAppointmentsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        """Returns only the current user's upcoming appointments."""
+        today = timezone.now()  # ✅ FIXED: Now using imported timezone
+        appointments = Appointment.objects.filter(
+            user=request.user, 
+            status='Confirmed',
+            start_time__gte=today
+        ).select_related('service').order_by('start_time')
+        
+        data = []
+        for appt in appointments:
+            if appt.start_time and appt.end_time:
+                data.append({
+                    'id': appt.id, 
+                    'service_id': appt.service.id,
+                    'service_name': appt.service.name,
+                    'start_time': appt.start_time.isoformat(), 
+                    'end_time': appt.end_time.isoformat(),
+                    'user_username': appt.user.username,
+                })
         
         return Response(data, status=status.HTTP_200_OK)

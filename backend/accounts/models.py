@@ -56,7 +56,10 @@ class Service(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     included = models.TextField(blank=True, null=True) 
-    duration = models.CharField(max_length=50)
+    
+    # FIX: Changed from CharField to IntegerField to store duration in minutes
+    duration_minutes = models.IntegerField(default=60, help_text="Duration of the service in minutes")
+    
     cost = models.DecimalField(max_digits=10, decimal_places=2)
     availability = models.BooleanField(default=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
@@ -116,16 +119,20 @@ class Feedback(models.Model):
         return f"Feedback by {self.user.username if self.user else 'Anonymous'} - {self.rating} stars"
 
 # ===============================================
-# ✅ NEW: APPOINTMENT MODEL
+# APPOINTMENT MODEL (FIXED)
 # ===============================================
 
 class Appointment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    # Storing date as a CharField to easily match the frontend 'YYYY-MM-DD' string
-    appointment_date = models.CharField(max_length=10) 
+    
+    # FIX: Renamed AND made nullable
+    start_time = models.DateTimeField(null=True, blank=True) 
+    # FIX: Kept nullable
+    end_time = models.DateTimeField(null=True, blank=True)
+    
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Confirmed')
     booked_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.service.name} for {self.user.username} on {self.appointment_date}"
+        return f"{self.service.name} for {self.user.username} from {self.start_time} to {self.end_time}"

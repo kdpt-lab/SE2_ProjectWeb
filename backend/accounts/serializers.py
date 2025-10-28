@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 # ✅ PetProfile, Feedback, and Appointment added to imports
 from .models import LoginActivity, Service, UserProfile, Order, Product, PetProfile, Feedback, Appointment 
+# ✅ Import timedelta for time calculations
+from datetime import timedelta
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -60,7 +62,8 @@ class ServiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Service
-        fields = ['id', 'name', 'description', 'included', 'duration', 'cost', 'availability', 'created_by', 'created_by_username', 'created_at']
+        # FIX: Changed 'duration' to 'duration_minutes'
+        fields = ['id', 'name', 'description', 'included', 'duration_minutes', 'cost', 'availability', 'created_by', 'created_by_username', 'created_at']
         read_only_fields = ['created_by', 'created_at'] 
 
     def create(self, validated_data):
@@ -181,27 +184,52 @@ class StaffProfileSerializer(serializers.ModelSerializer):
         return instance
 
 # ===============================================
-# ✅ NEW: APPOINTMENT SERIALIZER
+# APPOINTMENT SERIALIZER (FIXED)
 # ===============================================
 
 class AppointmentSerializer(serializers.ModelSerializer):
+    # Use PrimaryKeyRelatedField for incoming 'service' ID
+    service = serializers.PrimaryKeyRelatedField(
+        queryset=Service.objects.all(),
+        write_only=True
+    )
+    # Use DateTimeField for incoming 'start_time' string
+    start_time = serializers.DateTimeField()
+
+    # Read-only fields for a nice response
     user_username = serializers.CharField(source='user.username', read_only=True)
     service_name = serializers.CharField(source='service.name', read_only=True)
     
     class Meta:
         model = Appointment
-        fields = ['id', 'user', 'user_username', 'service', 'service_name', 'appointment_date', 'status', 'booked_at']
-        read_only_fields = ['user', 'status', 'booked_at'] 
+        # FIX: Updated fields to match the new model
+        fields = [
+            'id', 'user', 'user_username', 'service', 'service_name', 
+            'start_time', 'end_time', 'status', 'booked_at'
+        ]
+        read_only_fields = [
+            'user', 'status', 'booked_at', 'user_username', 
+            'service_name', 'end_time' # end_time is calculated, not provided by user
+        ] 
         
     def create(self, validated_data):
         request = self.context.get('request')
         if request and hasattr(request, 'user') and request.user.is_authenticated:
             validated_data['user'] = request.user
         
-        # Automatically set status to confirmed on creation
+        # --- DURATION LOGIC ---
+        # Get the service object (which was validated by PrimaryKeyRelatedField)
+        service = validated_data.get('service')
+        start_time = validated_data.get('start_time')
+        
+        # Calculate end_time based on service duration
+        duration_in_minutes = service.duration_minutes
+        end_time = start_time + timedelta(minutes=duration_in_minutes)
+        
+        validated_data['end_time'] = end_time
+        # --- END DURATION LOGIC ---
+        
         validated_data['status'] = 'Confirmed'
         
-        # OPTIONAL: Add logic here to check if the date/slot is already taken
-        # (Requires more complex backend logic than available here)
-        
         return super().create(validated_data)
+

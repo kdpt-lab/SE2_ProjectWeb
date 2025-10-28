@@ -32,12 +32,16 @@ from .views import (
     PetProfileDetailView,
 
     # ✅ Feedback
-    FeedbackCreateView, # FIX: Ensures the correct view name is imported
+    FeedbackCreateView, 
     FeedbackGalleryView,
     
     # ✅ Appointment
-    AppointmentCreateView, # NEW: For POST requests
-    AppointmentListView,   # NEW: For GET requests (booked slots)
+    AppointmentCreateView, 
+    AppointmentListView,
+    AppointmentDetailView,
+    # NEW: Import the new appointment views
+    AppointmentAdminListView,
+    MyUpcomingAppointmentsView,
 )
 from . import views
 
@@ -82,10 +86,16 @@ urlpatterns = [
     path('feedback/gallery/', FeedbackGalleryView.as_view(), name='feedback-gallery'), 
     
     # ===============================================
-    # ✅ NEW: APPOINTMENT PATHS
+    # ✅ APPOINTMENT PATHS (FIXED)
     # ===============================================
     # Handles POST /api/accounts/appointments/ (Booking creation)
     path('appointments/', AppointmentCreateView.as_view(), name='appointment-create'), 
     # Handles GET /api/accounts/appointments/booked/ (Calendar data)
-    path('appointments/booked/', AppointmentListView.as_view(), name='appointment-list'), 
+    path('appointments/booked/', AppointmentListView.as_view(), name='appointment-list'),
+    # FIX: Handles DELETE /api/accounts/appointments/<id>/ (Cancellation)
+    path('appointments/<int:pk>/', AppointmentDetailView.as_view(), name='appointment-detail'),
+    # NEW: Handles GET /api/accounts/appointments/all/ (Admin view all appointments)
+    path('appointments/all/', AppointmentAdminListView.as_view(), name='appointment-admin-list'),
+    # NEW: Handles GET /api/accounts/appointments/my-upcoming/ (User's upcoming appointments)
+    path('appointments/my-upcoming/', MyUpcomingAppointmentsView.as_view(), name='my-upcoming-appointments'),
 ]
